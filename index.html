@@ -24,6 +24,7 @@
         <ul>
           <li><a href="https://ithander.github.io/ModelSQL/ModelSQL.jar">下载<strong>Jar File</strong></a></li>
           <li><a href="https://github.com/ithander/ModelSQL">查看<strong>GitHub</strong></a></li>
+		  <li><a href="http://commons.apache.org/proper/commons-dbutils/download_dbutils.cgi">配合<strong>DBUtils</strong></a></li>
         </ul>
       </header>
       <section>
@@ -74,7 +75,81 @@
 <h2>
 <a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>生成 Update SQL</h2>
 
-<p>You can @mention a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor’s GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<code>
+
+	ms.updateSQL(false);
+	<p>返回字符串：<br/> update sys_user_info set uname=?,age=?,email=? where id=?</p>
+	ms.updateSQL(true);
+	<p>返回字符串：<br/> update sys_user_info set uname=:uname,age=:age,email=:email where id=:id</p>
+	
+	<br/>
+	User u=new User();<br/>
+	u.setId(123546);<br/>
+	u.setAge(25);<br/>
+	u.setEmail(null);<br/>
+	u.setUname("sandy");<br/>
+	ms.updateSQL(u);//如果参数为实体类则全量更新，即使有字段为空<br/>
+	<p>返回字符串：<br/> update sys_user_info set uname='sandy',age=0,email=NULL where id=1200</p>
+
+
+	<br/>
+	Map<String,Object> u=new HashMap<String,Object>();<br/>
+    u.put("id",13);<br/>
+	//u.put("age",25);//不存在字段自动过虑<br/>
+	u.put("other","good job good boy");//无效字段不会做处理<br/>
+	u.put("uname","haha");<br/>
+	ms.insertSQL(u);//如果能数为Map则，更新在Map中存在的字段<br/>
+	<p>返回字符串：<br/> update sys_user_info set uname='haha' where id=13</p>
+</code>
+
+<h2>
+<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>生成 Delete SQL</h2>
+
+<code>
+
+	ms.deleteSQL(false);
+	<p>返回字符串：<br/> delete from sys_user_info where id=?</p>
+	ms.deleteSQL(true);
+	<p>返回字符串：<br/> delete from sys_user_info where id=:id</p>
+	
+	<br/>
+	
+	ms.deleteSQL("1","2","3");<br/>
+	<p>返回字符串：<br/> delete from sys_user_info where id in (1,2,3)</p>
+
+    ms.deleteSQL("1");<br/>
+	<p>返回字符串：<br/> delete from sys_user_info where id =1</p>
+
+	<br/>
+	Map<String,Object> u=new HashMap<String,Object>();<br/>
+    u.put("id",13);<br/>
+	//u.put("uname","haha");//不存在字段自动过虑<br/>
+	u.put("other","good job good boy");//无效字段不会做处理<br/>
+	u.put("age",25);<br/>
+	ms.deleteSQL(u);//根据条件删除<br/>
+	<p>返回字符串：<br/> delete from sys_user_info where id=13 and age=25</p>
+</code>
+
+
+<code>
+     <h2>
+<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>生成 Select SQL</h2>
+
+   ms.select();
+   <p>返回字符串：<br/> select s21.id,s21.uname,s21.age,s21.email from sys_user_info s21</p>
+   ms.listSQL(0,10);
+   <p>返回字符串：<br/> select s21.id,s21.uname,s21.age,s21.email from sys_user_info s21 limit 0,10</p>
+
+   Map<String,Object> u=new HashMap<String,Object>();<br/>
+   u.put("id", "13");<br/>
+   u.put("age", 25);<br/>
+   ms.listSQL(u);
+   <p>返回字符串：<br/> select s21.id,s21.uname,s21.age,s21.email from sys_user_info s21 where s21.id=13 and s21.age=25</p>
+
+   ModelSQL mm=new ModelSQL(User.class); 
+   ms.select().leftJoin(mm).on("id", "id","uname","uname");
+   <p>返回字符串：<br/> select s21.id,s21.uname,s21.age,s21.email,s0.id,s0.uname,s0.age,s0.email from sys_user_info s21 left join sys_user_info s0 on s21.id=s0.id and s21.uname=s0.uname</p>
+</code>
 
 <h3>
 <a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>支持 / 联系</h3>
