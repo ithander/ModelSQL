@@ -1,6 +1,7 @@
 package org.ithang;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,10 +32,19 @@ public class ModelSQL {
 	private List<Model> models;
 	
 	private StringBuffer sb=null; //用于构建查询
+	private boolean selected=false;//用于标示是否己构建查询
+	
+	private static Map<String,List<Model>> allTabs=new HashMap<String,List<Model>>(50);
 	
 	public ModelSQL(Class<?> cls){
 		sb=new StringBuffer();
-		models=ModelTools.parseCls(cls);
+		if(null!=allTabs.get(cls.getSimpleName())){
+			models=allTabs.get(cls.getSimpleName());
+		}else{
+			models=ModelTools.parseCls(cls);
+			allTabs.put(cls.getSimpleName(), models);
+		}
+		
 		if(null!=models&&models.size()>0){
 			fieldNum=models.size();
 			tableName=models.get(0).getTableName();
@@ -307,13 +317,14 @@ public class ModelSQL {
 	public String deleteSQL(Map<String,Object> values){
 		StringBuilder sber=new StringBuilder("delete from ");
 		sber.append(tableName).append(" where ");
-		Model[] ms=getPrimaryModel();
 		int i=0;
-		for(Model m:ms){
-			if(i++>0){
-				sber.append(" and ");
+		for(Model m:models){
+			if(values.containsKey(m.getFieldName())){
+				if(i++>0){
+					sber.append(" and ");
+				}
+				sber.append(m.getColumnName()).append("=").append(m.getFieldValue(values));
 			}
-			sber.append(m.getColumnName()).append("=").append(m.getFieldValue(values));
 		}
 		return sber.toString();
 	}
@@ -323,9 +334,11 @@ public class ModelSQL {
 	 * @return modelSQL 在其础上进行灵活配置
 	 */
 	public ModelSQL select(){
-		sb.delete(0, sb.length());
-		sb.append("select ");
-		sb.append(queryColumns).append(" from ").append(tableName).append(" ").append(tableLabel);
+		if(!selected){
+			sb.delete(0, sb.length());
+			sb.append("select ");
+			sb.append(queryColumns).append(" from ").append(tableName).append(" ").append(tableLabel);
+		}
 		return this;
 	}
 	
@@ -354,6 +367,9 @@ public class ModelSQL {
 	 * @return
 	 */
 	public ModelSQL where(Map<String,Object> values){
+		if(!selected){
+			select();
+		}
 		if(null!=values&&values.size()>0){
 			sb.append(" where ");
 			int i=0;
@@ -374,6 +390,9 @@ public class ModelSQL {
 	}
 	
 	public Limit ascGroupBy(String..._columnNames){
+		if(!selected){
+			select();
+		}
 		if(null!=_columnNames&&_columnNames.length>0){
 			sb.append(" group by ");
 			for(String cn:_columnNames){
@@ -386,6 +405,9 @@ public class ModelSQL {
 	}
 	
 	public Limit descGroupBy(String..._columnNames){
+		if(!selected){
+			select();
+		}
 		if(null!=_columnNames&&_columnNames.length>0){
 			sb.append(" group by ");
 			for(String cn:_columnNames){
@@ -404,13 +426,28 @@ public class ModelSQL {
 	 * @return
 	 */
 	public String limit(int from,int size){
+		if(!selected){
+			select();
+		}
 		sb.append(" limit ").append(from).append(",").append(size);
 		return sb.toString();
 	}
 	
 	public ON leftJoin(ModelSQL _ms){
+		if(!selected){
+			select();
+		}
 		sb.insert(sb.indexOf("from")-1,","+_ms.getQureyColumns());
 		sb.append(" left join ").append(_ms.getTableName()).append(" ").append(_ms.getTableLabel());
+		return new ON(this,_ms);
+	}
+	
+	public ON innerJoin(ModelSQL _ms){
+		if(!selected){
+			select();
+		}
+		sb.insert(sb.indexOf("from")-1,","+_ms.getQureyColumns());
+		sb.append(" inner join ").append(_ms.getTableName()).append(" ").append(_ms.getTableLabel());
 		return new ON(this,_ms);
 	}
 	
