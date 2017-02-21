@@ -9,11 +9,11 @@ import org.junit.Test;
 
 public class ModelSQLTest {
 
-	private ModelSQL ms=null;
+	private ModelSQL<User> ms=null;
 	
 	@Before
 	public void setup(){
-		ms=new ModelSQL(User.class);
+		ms=new ModelSQL<User>(User.class);
 		System.out.println("before test");
 	}
 	
@@ -96,7 +96,7 @@ public class ModelSQLTest {
 		u.put("age", 25);
 		//u.put("desc", "good job");
 		//u.put("name", "good job");
-		System.out.println(ms.select().leftJoin(mm).on("id", "id","uname","uname"));
+		System.out.println(ms.select());
 	}
 	
 	@Test

@@ -13,7 +13,7 @@ import org.ithang.tools.ModelTools;
  *
  * @param <T>
  */
-public class ModelSQL {
+public class ModelSQL<T> {
 
 	private String tableName;
 	private String tableLabel;
@@ -33,14 +33,15 @@ public class ModelSQL {
 	
 	private StringBuffer sb=null; //用于构建查询
 	private boolean selected=false;//用于标示是否己构建查询
-	
+	private Class<T> prototype=null;//封装类型
 	private static Map<String,List<Model>> allTabs=new HashMap<String,List<Model>>(50);
 	
-	public ModelSQL(Class<?> cls){
+	public ModelSQL(Class<T> cls){
+		setPrototype(cls);
 		sb=new StringBuffer();
-		if(null!=allTabs.get(cls.getSimpleName())){
+		if(null!=allTabs.get(cls.getSimpleName())){//如果缓存中存在，则用缓存
 			models=allTabs.get(cls.getSimpleName());
-		}else{
+		}else{//如果缓存中不存在，则解析
 			models=ModelTools.parseCls(cls);
 			allTabs.put(cls.getSimpleName(), models);
 		}
@@ -333,12 +334,13 @@ public class ModelSQL {
 	 * 查询起步
 	 * @return modelSQL 在其础上进行灵活配置
 	 */
-	public ModelSQL select(){
-		if(!selected){
+	public ModelSQL<T> select(){
+		if(selected){//如果己构建则删除，因为可能包含了where join 等子句
 			sb.delete(0, sb.length());
-			sb.append("select ");
-			sb.append(queryColumns).append(" from ").append(tableName).append(" ").append(tableLabel);
 		}
+		sb.append("select ");
+		sb.append(queryColumns).append(" from ").append(tableName).append(" ").append(tableLabel);
+		selected=true;
 		return this;
 	}
 	
@@ -358,7 +360,28 @@ public class ModelSQL {
 	 * @return
 	 */
 	public String listSQL(Map<String,Object> values){
-		return select().where(values).toSQL();
+		return select().where(values).toString();
+	}
+	
+	/**
+	 * 直接返回一个新构建的StringBuilder让使用者自己构建where
+	 * @param columnName
+	 * @param columnValue
+	 * @return
+	 */
+	public StringBuilder where(String columnName,Object columnValue){
+		StringBuilder sber=new StringBuilder();
+		if(!selected){//如果未生成select语句，则生成
+			select();
+		}
+		sber.append(" where ").append(columnName).append("=");
+		if(columnValue instanceof String){
+			sber.append("'").append(columnValue).append("'");
+		}else{
+			sber.append(columnValue);
+		}
+		
+		return sber;
 	}
 	
 	/**
@@ -366,27 +389,28 @@ public class ModelSQL {
 	 * @param values
 	 * @return
 	 */
-	public ModelSQL where(Map<String,Object> values){
-		if(!selected){
+	public StringBuilder where(Map<String,Object> values){
+		StringBuilder sber=new StringBuilder();
+		if(!selected){//如果未生成select语句，则生成
 			select();
 		}
 		if(null!=values&&values.size()>0){
-			sb.append(" where ");
+			sber.append(" where ");
 			int i=0;
 			for(Model m:models){
 				if(values.containsKey(m.getFieldName())){
 					if(i++>0){
-						sb.append(" and ");
+						sber.append(" and ");
 					}
-					sb.append(tableLabel).append(".").append(m.getColumnName()).append("=").append(m.getFieldValue(values));
+					sber.append(tableLabel).append(".").append(m.getColumnName()).append("=").append(m.getFieldValue(values));
 				}
 			}
 			if(0==i){
-				sb.append(" 1=1");
+				sber.append(" 1=1");
 			}
 		}
 		
-		return this;
+		return sber;
 	}
 	
 	public Limit ascGroupBy(String..._columnNames){
@@ -433,22 +457,52 @@ public class ModelSQL {
 		return sb.toString();
 	}
 	
-	public ON leftJoin(ModelSQL _ms){
+	public ModelSQL<T> leftJoin(ModelSQL<?> _ms,String acolumnName,String bcolumnName){
 		if(!selected){
 			select();
 		}
 		sb.insert(sb.indexOf("from")-1,","+_ms.getQureyColumns());
 		sb.append(" left join ").append(_ms.getTableName()).append(" ").append(_ms.getTableLabel());
-		return new ON(this,_ms);
+		sb.append(" on ");
+		sb.append(" ").append(getTableLabel()).append(".").append(acolumnName).append("=").append(_ms.getTableLabel()).append(".").append(bcolumnName);
+		return this;
 	}
 	
-	public ON innerJoin(ModelSQL _ms){
+	public ModelSQL<T> leftJoin(ModelSQL<?> _ms,String[] acolumnNames,String[] bcolumnNames){
+		if(!selected){
+			select();
+		}
+		sb.insert(sb.indexOf("from")-1,","+_ms.getQureyColumns());
+		sb.append(" left join ").append(_ms.getTableName()).append(" ").append(_ms.getTableLabel());
+		sb.append(" on ");
+		int len=acolumnNames.length>bcolumnNames.length?bcolumnNames.length:acolumnNames.length;
+		for(int i=0;i<len;i++){
+			sb.append(" ").append(getTableLabel()).append(".").append(acolumnNames[i]).append("=").append(_ms.getTableLabel()).append(".").append(bcolumnNames[i]);
+		}
+		return this;
+	}
+	
+	public ModelSQL<T> innerJoin(ModelSQL<?> _ms,String acolumnName,String bcolumnName){
 		if(!selected){
 			select();
 		}
 		sb.insert(sb.indexOf("from")-1,","+_ms.getQureyColumns());
 		sb.append(" inner join ").append(_ms.getTableName()).append(" ").append(_ms.getTableLabel());
-		return new ON(this,_ms);
+	    sb.append(" ").append(getTableLabel()).append(".").append(acolumnName).append("=").append(_ms.getTableLabel()).append(".").append(bcolumnName);
+		return this;
+	}
+	
+	public ModelSQL<T> innerJoin(ModelSQL<?> _ms,String[] acolumnNames,String[] bcolumnNames){
+		if(!selected){
+			select();
+		}
+		sb.insert(sb.indexOf("from")-1,","+_ms.getQureyColumns());
+		sb.append(" inner join ").append(_ms.getTableName()).append(" ").append(_ms.getTableLabel());
+		int len=acolumnNames.length>bcolumnNames.length?bcolumnNames.length:acolumnNames.length;
+		for(int i=0;i<len;i++){
+			sb.append(" ").append(getTableLabel()).append(".").append(acolumnNames[i]).append("=").append(_ms.getTableLabel()).append(".").append(bcolumnNames[i]);
+		}
+		return this;
 	}
 	
 	public String getQureyColumns(){
@@ -496,6 +550,14 @@ public class ModelSQL {
 	@Override
 	public String toString() {
 		return toSQL();
+	}
+
+	public Class<T> getPrototype() {
+		return prototype;
+	}
+
+	public void setPrototype(Class<T> prototype) {
+		this.prototype = prototype;
 	}
 	
 }

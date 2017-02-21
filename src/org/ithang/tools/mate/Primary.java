@@ -8,4 +8,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Primary {
 
+	/**
+	 * Sequence
+	 * @return
+	 */
+	public String Seq() default "";
+	
 }

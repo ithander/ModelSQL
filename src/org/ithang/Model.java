@@ -24,6 +24,7 @@ public class Model {
 	private String desc;//备注
 	private Object defaultValue;
 	private boolean isPrimary;
+	private String sequence;
 	
 	public String getTableName() {
 		return tableName;
@@ -87,6 +88,12 @@ public class Model {
 		this.isPrimary = isPrimary;
 	}
 	
+	public String getSequence() {
+		return sequence;
+	}
+	public void setSequence(String sequence) {
+		this.sequence = sequence;
+	}
 	/**
 	 * 从实体类里得到值
 	 * @param bean
@@ -96,6 +103,9 @@ public class Model {
 		Method md=null;
 		Object r=null;
 		try{
+			if(isPrimary&&null!=sequence&&sequence.trim().length()>0){
+				return sequence+".nextVal";
+			}
 			md=bean.getClass().getMethod("get"+ModelTools.headUpper(fieldName));
 			if(null!=md){
 				r=md.invoke(bean);
@@ -120,6 +130,9 @@ public class Model {
 	public Object getFieldValue(Map<String,Object> values){
 		Object r=null;
 		try{
+			if(isPrimary&&null!=sequence&&sequence.trim().length()>0){
+				return sequence+".nextVal";
+			}
 			r=values.get(fieldName);
 			if(null==r){
 				r="NULL";

@@ -13,7 +13,7 @@ import org.ithang.tools.mate.Table;
 public final class ModelTools {
 
 	private final static Random r=new Random(System.currentTimeMillis()); 
-	
+	private final static String[] tableLabels=new String[]{"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","X","Y","Z"};
 	public static List<Model> parseCls(Class<?> cls){
 		String tableName=null;
 		String tableLabel=null;
@@ -22,7 +22,7 @@ public final class ModelTools {
 		List<Model> mds=null;
 		try{
 			tableName=getTableName(cls);
-			tableLabel=tableName.charAt(r.nextInt(tableName.length()))+String.valueOf(r.nextInt(36));
+			tableLabel=tableLabels[r.nextInt(tableLabels.length)]+String.valueOf(r.nextInt(36));
 			fields=cls.getDeclaredFields();
 			if(null!=fields&&fields.length>0){
 				mds=new ArrayList<Model>(fields.length);
@@ -44,6 +44,10 @@ public final class ModelTools {
 					}
                     m.setDefaultValue("NULL");
                     if(field.isAnnotationPresent(Primary.class)){
+                    	Primary pri=field.getAnnotation(Primary.class);
+                    	if(null!=pri&&null!=pri.Seq()&&pri.Seq().trim().length()>0){
+                    		m.setSequence(pri.Seq());
+                    	}
                     	m.setPrimary(true);	
                     }else{
                     	m.setPrimary(false);
