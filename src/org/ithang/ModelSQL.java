@@ -31,14 +31,14 @@ public class ModelSQL<T> {
 	private int fieldNum=0;
 	private List<Model> models;
 	
-	private StringBuffer sb=null; //用于构建查询
+	private StringBuilder sb=null; //用于构建查询
 	private boolean selected=false;//用于标示是否己构建查询
 	private Class<T> prototype=null;//封装类型
 	private static Map<String,List<Model>> allTabs=new HashMap<String,List<Model>>(50);
 	
 	public ModelSQL(Class<T> cls){
 		setPrototype(cls);
-		sb=new StringBuffer();
+		sb=new StringBuilder();
 		if(null!=allTabs.get(cls.getSimpleName())){//如果缓存中存在，则用缓存
 			models=allTabs.get(cls.getSimpleName());
 		}else{//如果缓存中不存在，则解析
@@ -370,18 +370,17 @@ public class ModelSQL<T> {
 	 * @return
 	 */
 	public StringBuilder where(String columnName,Object columnValue){
-		StringBuilder sber=new StringBuilder();
 		if(!selected){//如果未生成select语句，则生成
 			select();
 		}
-		sber.append(" where ").append(columnName).append("=");
+		sb.append(" where ").append(columnName).append("=");
 		if(columnValue instanceof String){
-			sber.append("'").append(columnValue).append("'");
+			sb.append("'").append(columnValue).append("'");
 		}else{
-			sber.append(columnValue);
+			sb.append(columnValue);
 		}
 		
-		return sber;
+		return sb;
 	}
 	
 	/**
@@ -390,27 +389,26 @@ public class ModelSQL<T> {
 	 * @return
 	 */
 	public StringBuilder where(Map<String,Object> values){
-		StringBuilder sber=new StringBuilder();
 		if(!selected){//如果未生成select语句，则生成
 			select();
 		}
 		if(null!=values&&values.size()>0){
-			sber.append(" where ");
+			sb.append(" where ");
 			int i=0;
 			for(Model m:models){
 				if(values.containsKey(m.getFieldName())){
 					if(i++>0){
-						sber.append(" and ");
+						sb.append(" and ");
 					}
-					sber.append(tableLabel).append(".").append(m.getColumnName()).append("=").append(m.getFieldValue(values));
+					sb.append(tableLabel).append(".").append(m.getColumnName()).append("=").append(m.getFieldValue(values));
 				}
 			}
 			if(0==i){
-				sber.append(" 1=1");
+				sb.append(" 1=1");
 			}
 		}
 		
-		return sber;
+		return sb;
 	}
 	
 	public Limit ascGroupBy(String..._columnNames){
@@ -543,7 +541,7 @@ public class ModelSQL<T> {
 		return model;
 	}
 	
-	protected StringBuffer getSQL(){
+	protected StringBuilder getSQL(){
 		return sb;
 	}
 	

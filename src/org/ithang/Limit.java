@@ -2,9 +2,9 @@ package org.ithang;
 
 public class Limit {
 
-	private StringBuffer sb=null;
+	private StringBuilder sb=null;
 	
-	public Limit(StringBuffer _sb){
+	public Limit(StringBuilder _sb){
 		sb=_sb;
 	}
 	/**
