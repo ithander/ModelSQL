@@ -8,7 +8,7 @@ import org.ithang.tools.ModelTools;
 /**
  * 
  * @author ithang
- *
+ * 针对实体类每个字段与表中每一列的详细对应关系
  */
 public class Model {
 
@@ -20,11 +20,16 @@ public class Model {
 	
 	private String columnName;
 	private String columnType;
+	private int columnLen;//列长度或精度
 	private String labelName;//别名
 	private String desc;//备注
-	private Object defaultValue;
+	private Object value;//列默认值
+	private boolean isNULL;//是否允许为空,true可以为空,false不可为空
 	private boolean isPrimary;
-	private String sequence;
+	private boolean autoIncrement;//是否自增
+	private String sequence;//采用的sequence，用在oracle中
+   
+	private String type;//列对应的java类型
 	
 	public String getTableName() {
 		return tableName;
@@ -75,11 +80,11 @@ public class Model {
 	public void setDesc(String desc) {
 		this.desc = desc;
 	}
-	public Object getDefaultValue() {
-		return defaultValue;
+	public Object getValue() {
+		return value;
 	}
-	public void setDefaultValue(Object defaultValue) {
-		this.defaultValue = defaultValue;
+	public void setValue(Object value) {
+		this.value = value;
 	}
 	public boolean isPrimary() {
 		return isPrimary;
@@ -144,6 +149,30 @@ public class Model {
 		}
 		
 		return r;
+	}
+	public int getColumnLen() {
+		return columnLen;
+	}
+	public void setColumnLen(int columnLen) {
+		this.columnLen = columnLen;
+	}
+	public boolean isNULL() {
+		return isNULL;
+	}
+	public void setNULL(boolean isNULL) {
+		this.isNULL = isNULL;
+	}
+	public boolean isAutoIncrement() {
+		return autoIncrement;
+	}
+	public void setAutoIncrement(boolean autoIncrement) {
+		this.autoIncrement = autoIncrement;
+	}
+	public String getType() {
+		return type;
+	}
+	public void setType(String type) {
+		this.type = type;
 	}
 	
 }

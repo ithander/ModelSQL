@@ -1,12 +1,16 @@
 package org.ithang.tools;
 
 import java.lang.reflect.Field;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.dbutils.QueryRunner;
 import org.ithang.Model;
 import org.ithang.tools.mate.Column;
+import org.ithang.tools.mate.ColumnInfo;
+import org.ithang.tools.mate.Ignore;
 import org.ithang.tools.mate.Primary;
 import org.ithang.tools.mate.Table;
 
@@ -37,21 +41,40 @@ public final class ModelTools {
                     m.setFieldName(field.getName());
                     m.setFieldType(field.getType().getSimpleName());
                     m.setTableLabel(tableLabel);
+                    //判断是否存在column注解，如果存在则用注解值作为列名
                     if(field.isAnnotationPresent(Column.class)){
 						m.setColumnName(field.getAnnotation(Column.class).value());
 					}else{
-						m.setColumnName(addUnderline(field.getName()));
+						//如果存在ignore注解，则表示不处理该字段，该字段不对应表中任何列
+						if(field.isAnnotationPresent(Ignore.class)){
+							continue;
+						}else{//如果column和ignore都不存在，则默认列名为字段名的驼峰式转下划线式
+						    m.setColumnName(addUnderline(field.getName()));
+						}
 					}
-                    m.setDefaultValue("NULL");
+                    m.setValue("NULL");
+                    
+                    //判断是不是主键
                     if(field.isAnnotationPresent(Primary.class)){
                     	Primary pri=field.getAnnotation(Primary.class);
-                    	if(null!=pri&&null!=pri.Seq()&&pri.Seq().trim().length()>0){
+                    	if(null!=pri&&null!=pri.Seq()&&pri.Seq().trim().length()>0){//设置主键sequence
                     		m.setSequence(pri.Seq());
                     	}
                     	m.setPrimary(true);	
                     }else{
                     	m.setPrimary(false);
                     }
+                    
+                    //得到列的相关信息，用于创建表
+                    if(field.isAnnotationPresent(ColumnInfo.class)){
+                    	ColumnInfo ci=field.getAnnotation(ColumnInfo.class);
+                    	m.setValue((null==ci.value())?null:ci.value().trim().length()==0?null:ci.value());
+                    	m.setNULL(ci.isNULL());
+                    	m.setColumnType(ci.type());
+                    	m.setColumnLen(ci.len());
+                    	m.setAutoIncrement(ci.autoIncrement());
+                    }
+                    
                     mds.add(m);
 				}
 			}
@@ -140,7 +163,6 @@ public final class ModelTools {
 		}
 		return columnNames;
 	}
-	
 	
 	/**
 	 * 判断字符串是否为空
@@ -262,4 +284,12 @@ public final class ModelTools {
 		}
 		return columnName.toLowerCase();
 }
+
+	public static void generBean(Connection conn){
+		QueryRunner qr=new QueryRunner();
+	}
+	
+	private static List<Model> parseModelFromTable(String tableName){
+		return null;
+	}
 }

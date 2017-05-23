@@ -15,13 +15,13 @@ import org.ithang.tools.ModelTools;
  */
 public class ModelSQL<T> {
 
-	private String tableName;
-	private String tableLabel;
-	private String[] columnNames;
-	private String[] fieldNames;
+	private String tableName;//表名称
+	private String tableLabel;//表别名 在ModelTools中随机出来
+	private String[] columnNames;//所有表列名称
+	private String[] fieldNames;//所有实体类字段名称
 	
-	private String columnNameStr;
-	private String fieldNameStr;
+	private String columnNameStr;//所有列名称以逗号链接的字符串
+	private String fieldNameStr;//所有字段名称以逗号链接的字符串
 	
 	private String fieldHodler;//例如 insert into Tab(a,b,c)values([?,?,?])
 	private String fieldNameHolder;//例如 insert into Tab(a,b,c)values([:a,:b,:c])
@@ -501,6 +501,56 @@ public class ModelSQL<T> {
 			sb.append(" ").append(getTableLabel()).append(".").append(acolumnNames[i]).append("=").append(_ms.getTableLabel()).append(".").append(bcolumnNames[i]);
 		}
 		return this;
+	}
+	
+	public String createTable(boolean delExist){
+		StringBuilder sber=new StringBuilder();
+		if(delExist){
+			sber.append(" drop table `").append(tableName).append("` ;\n");
+		}
+		sber.append(" create table `").append(tableName).append("` ( \n");
+		String primaryKey=null;
+		for(Model model:models){
+			if(model.isPrimary()){
+				if(null==primaryKey){
+					primaryKey="`"+model.getColumnName()+"`";	
+				}else{
+					primaryKey+=",`"+model.getColumnName()+"`";
+				}
+			}
+			sber.append("\t\t\t`").append(model.getColumnName()).append("` ").append(model.getColumnType());
+			if(model.getColumnLen()>0){
+				sber.append("(").append(model.getColumnLen()).append(")");
+			}
+			
+			//是否可为空
+			if(model.isNULL()){
+				sber.append(" NULL ");
+			}else{
+				sber.append(" NOT NULL ");
+			}
+			
+			if(null!=model.getValue()){
+				sber.append(" default ");
+				if("varchar".equals(model.getColumnType())||model.getColumnType().toLowerCase().endsWith("text")){
+					sber.append("'").append(model.getValue()).append("'");
+				}else{
+				    sber.append(model.getValue());
+				}
+			}
+			if(model.isAutoIncrement()){
+				sber.append(" AUTO_INCREMENT");
+			}
+			sber.append(",\n");
+		}
+		
+		if(null!=primaryKey){
+			sber.append("\t\t\tPRIMARY KEY (").append(primaryKey).append(")");
+		}else{
+			sber.delete(sber.length()-2, sber.length());
+		}
+		sber.append("\n\t)ENGINE=InnoDB DEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci;");
+		return sber.toString();
 	}
 	
 	public String getQureyColumns(){

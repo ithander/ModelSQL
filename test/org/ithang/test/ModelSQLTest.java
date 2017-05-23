@@ -87,9 +87,9 @@ public class ModelSQLTest {
 		System.out.println(ms.deleteSQL(u));
 	}*/
 	
-	@Test
+	//@Test
 	public void testSelectValues()  {
-		ModelSQL mm=new ModelSQL(User.class); 
+		ModelSQL<User> mm=new ModelSQL<User>(User.class); 
 		mm.select();
 		Map<String,Object> u=new HashMap<String,Object>();
 		u.put("id", "13");
@@ -99,7 +99,7 @@ public class ModelSQLTest {
 		System.out.println(ms.select());
 	}
 	
-	@Test
+	//@Test
 	public void testSelectGroupBy()  {
 		Map<String,Object> u=new HashMap<String,Object>();
 		u.put("id", "13");
@@ -107,6 +107,10 @@ public class ModelSQLTest {
 		//u.put("desc", "good job");
 		//u.put("name", "good job");
 		System.out.println(ms.select().ascGroupBy("id","name").limit(0, 12));
+	}
+	@Test
+	public void testCreateTable(){
+		System.out.println(ms.createTable(true));
 	}
 
 }
