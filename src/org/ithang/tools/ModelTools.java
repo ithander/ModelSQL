@@ -2,11 +2,14 @@ package org.ithang.tools;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.BeanListHandler;
+import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.ithang.Model;
 import org.ithang.tools.mate.Column;
 import org.ithang.tools.mate.ColumnInfo;
@@ -285,11 +288,17 @@ public final class ModelTools {
 		return columnName.toLowerCase();
 }
 
-	public static void generBean(Connection conn){
+	public static void generBeanFromMySQL(Connection conn,String schema) throws SQLException{
 		QueryRunner qr=new QueryRunner();
+		List<String> tables=qr.query(conn,"select table_name from information_schema.columns where table_schema='"+schema+"'", new ColumnListHandler<String>());
+		if(null!=tables&&tables.size()>0){
+			for(String table:tables){
+				List<Column> columns=qr.query(conn, "select table_name,column_name,is_nullable,data_type,column_key,character_maximum_length len from information_schema.columns where table_schema='"+schema+"'", new BeanListHandler<Column>(Column.class));
+			}
+		}
 	}
 	
-	private static List<Model> parseModelFromTable(String tableName){
+	private static List<Model> parseModelFromTable(List<Column> columns){
 		return null;
 	}
 }
