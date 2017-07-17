@@ -25,6 +25,13 @@ public final class StrUtils {
 		return str;
 	}
     
+    public static boolean isEmptyArray(Object[] array){
+    	if(null!=array&&array.length>0){
+    		return true;
+    	}
+    	return false;
+    }
+    
     /**
 	 * 增加下划线,把驼峰式转到下划线式
 	 * @param tname
