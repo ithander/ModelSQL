@@ -15,10 +15,12 @@ public class UserBean {
 	
 	private String uname;
 	
+	@Primary
 	private int age;
 	
 	private Integer grade;
 	
+	@Primary
 	private Long high;
 	
 	@Column("create_time")

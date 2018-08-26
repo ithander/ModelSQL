@@ -14,6 +14,7 @@ import org.ithang.tools.lang.StrUtils;
  *
  * @param <T>
  */
+@Deprecated
 public class ModelSQL<T> {
 
 	private String tableName;//表名称

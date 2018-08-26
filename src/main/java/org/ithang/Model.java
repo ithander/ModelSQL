@@ -11,6 +11,7 @@ import org.ithang.tools.lang.StrUtils;
  * @author ithang
  * 针对实体类每个字段与表中每一列的详细对应关系
  */
+@Deprecated
 public class Model {
 
 	private String tableName;
